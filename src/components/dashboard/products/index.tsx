@@ -1,186 +1,105 @@
-import React, { useMemo } from "react";
-import { Button, Dropdown, Space, message, Skeleton, Empty } from "antd";
-import {
-  DownOutlined,
-  ShoppingCartOutlined,
-  HeartOutlined,
-  SearchOutlined,
-} from "@ant-design/icons";
-import type { MenuProps } from "antd";
-
-import { useReduxDispatch } from "../../../hooks/useRedux";
+import { useSearchParams } from "react-router-dom";
 import { useQueryHandler } from "../../../hooks/useQuery";
-import { addToCart } from "../../../redux/card-slice";
-import type { ProductType, QueryType } from "../../../@types/inedx";
+import SkeletonImage from "antd/es/skeleton/Image";
+import Card from "./card";
 
-import rig from "../../../img/rig.svg";
+export const useSearchParamsHandler = () => {
+  const [params, setParams] = useSearchParams();
+  const getParam = (path: string) => params.get(path);
+  const setParam = (newParams: Record<string, any>) => {
+    const currentParams = Object.fromEntries(params.entries());
+    setParams({ ...currentParams, ...newParams });
+  };
+  return { getParam, setParam, params };
+};
 
-const items: MenuProps["items"] = [
-  { label: "Default sorting", key: "default" },
-  { label: "Price: Low to High", key: "price_low" },
-  { label: "Price: High to Low", key: "price_high" },
-];
+const Productss = () => {
+  const { getParam, setParam } = useSearchParamsHandler();
 
-const Productss: React.FC = () => {
-  const dispatch = useReduxDispatch();
+  const category = getParam("category") || "house-plants";
+  const type = getParam("type") || "all-plants";
+  const sort = getParam("sort") || "default";
+  const range_min = Number(getParam("range_min")) || 0;
+  const range_max = Number(getParam("range_max")) || 1000;
 
-  const { data, isLoading, isError }: QueryType<any> = useQueryHandler({
-    url: "flower/category/house-plants",
-    pathname: "products",
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useQueryHandler({
+    url: `flower/category/${category}`,
+    pathname: `products-${category}-${type}-${sort}-${range_min}-${range_max}`,
+    param: {
+      range_min,
+      range_max,
+      sort,
+      type: type === "all-plants" ? "" : type,
+    },
   });
 
-  const products: ProductType[] = useMemo(() => {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if (data?.data && Array.isArray(data.data)) return data.data;
-    return [];
-  }, [data]);
-
-  const handleAddToCart = (e: React.MouseEvent, product: any) => {
-    e.stopPropagation();
-    dispatch(
-      addToCart({
-        id: product._id,
-        name: product.title,
-        price: product.price,
-        image: product.main_image,
-      }),
-    );
-    message.success(`${product.title} savatga qo'shildi`);
-  };
-
-  const onClick: MenuProps["onClick"] = ({ key }) => {
-    message.info(`Saralash: ${key}`);
-  };
-
-  if (isError) {
-    return (
-      <div className="py-20 text-center">
-        <Empty description="Ma'lumotlarni yuklashda xatolik yuz berdi" />
-      </div>
-    );
-  }
+  const products = (response as any)?.data;
 
   return (
-    <div className="py-10 w-full">
-      <div className="flex-1 w-full flex flex-col">
-        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4">
-          <ul className="flex items-center gap-4 sm:gap-8 text-[12px] sm:text-[16px]">
-            <li className="cursor-pointer text-[#46A358] font-bold border-b-2 border-[#46A358]">
-              All Plants
-            </li>
-            <li className="cursor-pointer hover:text-[#46A358] transition-colors">
-              New Arrivals
-            </li>
-            <li className="cursor-pointer hover:text-[#46A358] transition-colors">
-              Sale
-            </li>
-          </ul>
-          <div className="flex items-center gap-3">
-            <p className="text-[14px]">Sort by:</p>
-            <Dropdown menu={{ items, onClick }}>
-              <a onClick={(e) => e.preventDefault()} href="#">
-                <Space className="text-[14px] cursor-pointer">
-                  Default sorting <DownOutlined />
-                </Space>
-              </a>
-            </Dropdown>
-          </div>
+    <div className="mt-5 w-full pr-3">
+      <div className="flex items-center justify-between border-b border-[#46A358]/20 mb-6 pb-2">
+        <div className="flex gap-8">
+          {[
+            { label: "All Plants", value: "all-plants" },
+            { label: "New Arrivals", value: "new-arrivals" },
+            { label: "Sale", value: "sale" },
+          ].map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setParam({ type: item.value })}
+              className={`text-[16px] pb-2 transition-all relative ${
+                type === item.value
+                  ? "text-[#46A358] font-bold after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#46A358]"
+                  : "text-[#3D3D3D] hover:text-[#46A358]"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        <div className="w-full grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-10 pt-5">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="w-full">
-                <Skeleton.Button active block style={{ height: 300 }} />
-                <Skeleton active paragraph={{ rows: 1 }} className="mt-4" />
-              </div>
-            ))
-          ) : products.length > 0 ? (
-            products.map((product) => (
-              <div
-                key={product._id}
-                className="group border-t-2 border-transparent hover:border-[#46A358] transition-all cursor-pointer w-full"
-              >
-                <div className="p-1 pt-12 h-80 pb-12 shadow flex items-center justify-center relative overflow-hidden bg-[#FBFBFB]">
-                  <img
-                    src={product.main_image}
-                    className="max-w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                    alt={product.title}
-                  />
-
-                  <div className="absolute bottom-4 flex gap-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                    <div
-                      onClick={(e) => handleAddToCart(e, product)}
-                      className="bg-white p-2 rounded-lg hover:text-[#46A358] transition-colors shadow-md"
-                    >
-                      <ShoppingCartOutlined className="text-[20px]" />
-                    </div>
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        message.info("Sevimlilarga qo'shildi");
-                      }}
-                      className="bg-white p-2 rounded-lg hover:text-[#46A358] transition-colors shadow-md"
-                    >
-                      <HeartOutlined className="text-[20px]" />
-                    </div>
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        message.info("Tezkor ko'rish");
-                      }}
-                      className="bg-white p-2 rounded-lg hover:text-[#46A358] transition-colors shadow-md"
-                    >
-                      <SearchOutlined className="text-[20px]" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <p className="text-[#3D3D3D] text-[16px] truncate">
-                    {product.title}
-                  </p>
-                  <div className="w-full flex items-center gap-7">
-                    <p className="text-[#46A358] font-bold text-[18px]">
-                      ${product.price}
-                    </p>
-                    {product.discount_price && (
-                      <p className="text-[#CBCBCB] text-[18px]">
-                        <del>${product.discount_price}</del>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full py-20 text-center">
-              <Empty description="Mahsulotlar topilmadi" />
-            </div>
-          )}
-        </div>
-
-        <div className="w-full flex justify-end pt-9">
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4].map((num) => (
-              <Button
-                key={num}
-                className={`!shadow-none ${
-                  num === 1
-                    ? "!bg-[#46A358] !text-white !border-[#46A358]"
-                    : "!bg-white !text-black !border-gray-200 hover:!text-[#46A358] hover:!border-[#46A358]"
-                }`}
-              >
-                {num}
-              </Button>
-            ))}
-            <Button className="!bg-white !text-black !border-gray-200 flex items-center justify-center !shadow-none hover:!border-[#46A358]">
-              <img src={rig} alt="next" className="w-4 h-4" />
-            </Button>
-          </div>
+        <div className="flex items-center gap-2 text-[#3D3D3D]">
+          <span className="text-[15px]">Short by:</span>
+          <select
+            value={sort}
+            onChange={(e) => setParam({ sort: e.target.value })}
+            className="bg-transparent font-medium focus:outline-none cursor-pointer text-[15px]"
+          >
+            <option value="default">Default sorting</option>
+            <option value="low-to-high">Price: Low to High</option>
+            <option value="high-to-low">Price: High to Low</option>
+            <option value="newest">Newest</option>
+          </select>
         </div>
       </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+          {[...Array(6)].map((_, i) => (
+            <SkeletonImage
+              className="w-[120px!] h-[120px!]"
+              style={{ width: 250, height: 250 }}
+              key={i}
+            />
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="text-center py-20 text-red-500">Xatolik yuz berdi.</div>
+      ) : !products || products.length === 0 ? (
+        <div className="text-center py-20 text-gray-400 font-medium">
+          Mahsulotlar topilmadi.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+          {products.map((item: any) => (
+            <Card key={item._id} {...item} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

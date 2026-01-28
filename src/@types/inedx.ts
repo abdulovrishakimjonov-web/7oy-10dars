@@ -85,3 +85,20 @@ export interface ProductType {
   userPrice?: number;
   _id: string;
 }
+export interface DiscountFlowerType {
+  discoount_up_to: number;
+  id: number;
+  poster_image_url: string;
+  title: string;
+}
+export interface ShopCardType extends ProductType {
+  counter: number;
+  userPrice: number;
+}
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+}

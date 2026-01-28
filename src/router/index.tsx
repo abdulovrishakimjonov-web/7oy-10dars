@@ -1,9 +1,11 @@
-import { createBrowserRouter } from "react-router-dom";
-import Home from "../pages/home";
 import MainLayout from "../components/layout/MainLayout";
-import Plant from "../pages/plant";
-import Shop from "../pages/shop";
 import Blog from "../pages/blog";
+import Shop from "../pages/shop";
+import Plant from "../pages/plant";
+import Home from "../pages/home";
+import ProductDetail from "../components/dashboard/products/carditemsearch";
+import { createBrowserRouter } from "react-router-dom";
+import WishlistPage from "../components/product-shop/like";
 
 export const router = createBrowserRouter([
   {
@@ -15,20 +17,28 @@ export const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/home",
+        path: "home",
         element: <Home />,
       },
       {
-        path: "/blogs",
+        path: "blogs",
         element: <Blog />,
       },
       {
-        path: "/shop",
+        path: "shop",
         element: <Shop />,
       },
       {
-        path: "/plant",
+        path: "plant",
         element: <Plant />,
+      },
+      {
+        path: "search",
+        element: <ProductDetail />,
+      },
+      {
+        path: "wishlist",
+        element: <WishlistPage />,
       },
     ],
   },

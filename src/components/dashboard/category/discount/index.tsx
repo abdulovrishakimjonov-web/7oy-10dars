@@ -1,33 +1,42 @@
-import type { DiscountFlowerType } from "../../../../@types/inedx";
+import type { DiscountFlowerType, QueryType } from "../../../../@types/inedx";
 import { useQueryHandler } from "../../../../hooks/useQuery";
 
 const Discount = () => {
-  const result = useQueryHandler({
+  const { data: response, isLoading } = useQueryHandler({
     url: "features/discount",
     pathname: "discount",
-  }) as { data: DiscountFlowerType[] };
+  }) as { data: QueryType<DiscountFlowerType> | any; isLoading: boolean };
 
-  const data = result?.data;
+  const flowerData = response?.data;
 
-  const discountData = Array.isArray(data) && data.length > 0 ? data[0] : null;
+  if (isLoading) {
+    return <div className="text-center p-5">Yuklanmoqda...</div>;
+  }
 
-  if (!discountData) return null;
+  if (!flowerData) {
+    return null;
+  }
 
   return (
-    <div className="bg-[#FBFBFB] mt-5 p-4 text-center">
+    <div className="bg-[#FBFBFB] mt-5 p-4 text-center p-5">
       <h2 className="text-[#46A358] text-2xl font-bold">
-        {/* BU YERDA: discount_up_to deb yozing (backend-ga qarab) */}
-        {discountData.discoount_up_to || 0}% OFF
+        {flowerData?.discoount_up_to || 0}% OFF
       </h2>
+
       <h3 className="text-[18px] font-bold text-[#3D3D3D] mt-2">
-        {discountData.title}
+        {flowerData?.title}
+        <br />
+        <span className="text-sm font-normal">now end</span>
       </h3>
+
       <div className="mt-4 flex justify-center">
-        <img
-          src={discountData.poster_image_url}
-          alt={discountData.title}
-          className="w-full h-auto object-contain max-h-[250px]"
-        />
+        {flowerData?.poster_image_url && (
+          <img
+            src={flowerData.poster_image_url}
+            alt={flowerData.title || "Discount Image"}
+            className="w-full h-auto object-contain max-h-[250px]"
+          />
+        )}
       </div>
     </div>
   );

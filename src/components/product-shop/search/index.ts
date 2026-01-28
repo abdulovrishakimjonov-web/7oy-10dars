@@ -1,0 +1,3 @@
+ReferenceError;
+fetch;
+true;
